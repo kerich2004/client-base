@@ -1,0 +1,59 @@
+const http = require('http');
+const fs = require('fs');
+let replaceMarkup = ''
+let data = []
+
+const port = 47080;
+
+http.createServer((request, response) => {
+  const url = request.url
+
+  if (request.method == 'POST') {
+    let body = ''
+
+    request.on('data', (chunk) => body += chunk)
+    request.on('end', () => response.end(data.push(JSON.parse(body)) + ''))
+  }
+
+  else if (request.method == 'DELETE') {
+    let i = ''
+
+    request.on('data', (chunk) => {
+      i += chunk
+      data.splice(i, 1)
+      response.end()
+    })
+  }
+
+  else {
+    try {
+      const path = url.slice(1) || 'index.html';
+      let fileContent = fs.readFileSync('./public/' + path, 'utf-8')
+
+      if (path == 'index.html') {
+        let html = ''
+
+        for (const person of data) {
+          html += `
+            <tr>
+              <td>${person.name}</td>
+              <td>${person.number}</td>
+              <td>${person.auto}</td>
+              <td><button>&times;</button></td>
+            </tr>
+          `
+        }
+
+        replaceMarkup = fileContent.replace('#', html)
+
+        response.end(replaceMarkup)
+      } else {
+        response.end(fileContent)
+      }
+    }
+    catch (error) {
+      writeHead(404)
+      console.log(error)
+    }
+  }
+}).listen(port)
