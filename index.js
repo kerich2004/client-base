@@ -1,5 +1,6 @@
 const http = require('http');
 const fs = require('fs');
+const { text } = require('stream/consumers');
 let replaceMarkup = ''
 let data = []
 
@@ -7,13 +8,31 @@ const port = 47080;
 
 http.createServer((request, response) => {
   const url = request.url
+  
+  if (request.url == '/api/endpoint1') {
+    let postData = ''
+    let formIndex = ''
+    let postDataObj = ''
+    let index = ''
+    request.on('data', (chunk) => {
+      postData += chunk
+      postDataObj = JSON.parse(postData)
+    })
+    request.on('end', () => {
+      index = postDataObj.index
+      data[index] = postDataObj
+      response.end()
+    })
+  }
 
-  if (request.method == 'POST') {
+  else if (request.method == 'POST') {
     let body = ''
+
 
     request.on('data', (chunk) => body += chunk)
     request.on('end', () => response.end(data.push(JSON.parse(body)) + ''))
   }
+
 
   else if (request.method == 'DELETE') {
     let i = ''
